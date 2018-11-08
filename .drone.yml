@@ -1,0 +1,25 @@
+pipeline:
+
+  reverseproxy_build:
+    when:
+      event: tag
+    auto_tag: true
+    group: build
+    image: plugins/docker
+    repo: registry.fge.cloud/fabiangehrlicher/reverseproxy
+    registry: https://registry.fge.cloud
+    dockerfile: Dockerfile
+    username: drone
+    password: drone
+
+  deploy:
+    when:
+      event: tag
+    image: appleboy/drone-ssh
+    host: fge.cloud
+    username: root
+    port: 22
+    secrets: [ ssh_password ]
+    script:
+    - docker pull registry.fge.cloud/fabiangehrlicher/reverseproxy:latest
+    - cd /root/docker && ls -la
