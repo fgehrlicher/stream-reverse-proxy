@@ -1,12 +1,25 @@
-FROM nginx:1.15.2
+FROM golang:1.11.3-alpine AS builder
 
-RUN apt-get update
-RUN apt-get install -y netcat procps
+RUN apk add --no-cache ca-certificates git curl
 
-COPY bin/init.sh /init.sh
-RUN chmod +x /init.sh
+RUN curl -fsSL -o /usr/local/bin/dep \
+    https://github.com/golang/dep/releases/download/v0.5.0/dep-linux-amd64 && \
+    chmod +x /usr/local/bin/dep
 
-WORKDIR /etc/nginx
+COPY . /go/src/gitea.fge.cloud/fabian_gehrlicher/reverseproxy
+WORKDIR /go/src/gitea.fge.cloud/fabian_gehrlicher/reverseproxy
 
-ENTRYPOINT ["/bin/bash"]
-CMD ["/init.sh"]
+RUN dep ensure -vendor-only
+RUN CGO_ENABLED=0 go build \
+    -installsuffix 'static' \
+    -o /reverseproxy .
+RUN go build .
+
+FROM nginx:1.15.2 as final
+
+EXPOSE 5000
+COPY --from=builder /reverseproxy /reverseproxy
+RUN chmod +x /reverseproxy
+USER root
+
+ENTRYPOINT ["/reverseproxy"]

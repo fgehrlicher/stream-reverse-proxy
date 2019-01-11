@@ -1,8 +1,6 @@
 pipeline:
 
   reverseproxy_build:
-    when:
-      event: tag
     auto_tag: true
     group: build
     image: plugins/docker
@@ -13,8 +11,6 @@ pipeline:
     password: drone
 
   deploy:
-    when:
-      event: tag
     image: appleboy/drone-ssh
     host: fge.cloud
     username: root
